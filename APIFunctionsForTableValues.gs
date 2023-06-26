@@ -26,6 +26,6 @@ function checkAnswerStatus(spreadSheet,name){
   const lastColumn = getLastColumnInRange(range);
   const lastDate = sheet.getRange(2,lastColumn,1,1).getValue();
 
-  return lastDate;
+  return new Date(lastDate);
 }
 

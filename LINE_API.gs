@@ -2,6 +2,7 @@
  * userIDとスプレッドシートの対応の記録方法
  * 一度スクリプトプロパティに保存→検証して大丈夫そうだったらスプレッドシートのDBに記録
  * ∵スプレッドシートのみの記録だと２つ目以降の連携の際にDBから取り出すべきURLの区別がつかなくなる
+ * 個人トークの対応はスプレッドシートDBに、グループトークの対応はスクリプトプロパティに記録する
  */
 
 /**
@@ -72,31 +73,35 @@ function doPost(e) {
 
           postToTalk(replyToken,replyMessage);
       }else if(userMessage.includes("回答状況")){
-        const groupId = eventData.source.groupId;
-        const spreadSheetUrl = PropertiesService.getScriptProperties().getProperty(groupId);
-        const spreadSheet = SpreadsheetApp.openByUrl(spreadSheetUrl);
-        // 入力状況を返す
-          summarizeFormsForApi(spreadSheet);
-          setAnswerStatusForApi(spreadSheet);
+        try{
+          const groupId = eventData.source.groupId;
+          const spreadSheetUrl = PropertiesService.getScriptProperties().getProperty(groupId);
+          const spreadSheet = SpreadsheetApp.openByUrl(spreadSheetUrl);
+          // 入力状況を返す
+            summarizeFormsForApi(spreadSheet);
+            setAnswerStatusForApi(spreadSheet);
 
-          const setSheet = spreadSheet.getSheetByName("ホーム");
-          const reqNum = setSheet.getRange("F6").getValue();
-          let statusArray = setSheet.getRange(17,10,reqNum,3).getDisplayValues();
-          let tmpArray = [];
-          for(i=0;i<reqNum;i++){
-            tmpArray.push(statusArray[i].join(" "));
-          }
-          const outputArray = tmpArray.join("\n");
-          const replyMessage = "現在の回答状況\n"+outputArray;
+            const setSheet = spreadSheet.getSheetByName("ホーム");
+            const reqNum = setSheet.getRange("F6").getValue();
+            let statusArray = setSheet.getRange(17,10,reqNum,3).getDisplayValues();
+            let tmpArray = [];
+            for(i=0;i<reqNum;i++){
+              tmpArray.push(statusArray[i].join(" "));
+            }
+            const outputArray = tmpArray.join("\n");
+            const replyMessage = "現在の回答状況\n"+outputArray;
 
-          postToTalk(replyToken,replyMessage);
+            postToTalk(replyToken,replyMessage);
+        }catch(ERROR){
+          console.log(ERROR);
+        }
       }else if(userMessage.includes("リンク")){
         const groupId = eventData.source.groupId;
         const spreadSheetUrl = PropertiesService.getScriptProperties().getProperty(groupId);
         const spreadSheet = SpreadsheetApp.openByUrl(spreadSheetUrl);
         // リンク集を返す
           const setSheet = spreadSheet.getSheetByName("ホーム");
-          const replyMessage = setSheet.getRange("F17").getValue();
+          const replyMessage = setSheet.getRange("F17").getValue()+"\n\n集約さん公式アカウントとの個人トークからはさらに簡単に回答いただけます！";
 
           postToTalk(replyToken,replyMessage);
       }else{
@@ -109,7 +114,11 @@ function doPost(e) {
       // 個人トーク
       // 連携モード１段階目
       if(userMessage.includes("連携")){
-        const message = "このLINEトークと集約さんの連携をしましょう！\n↓のように「リンク」と入力した上で参加しているグループの集約さんスプレッドシートのURLを送ってください！\n\n例:\nリンク\nhttps://docs.google.com/spreadsheets/d/********";
+        const userId = eventData.source.userId;
+        const urls = getSpreadSheetUrlsByUserId(userId);
+        const outputText = urls.map(value => SpreadsheetApp.openByUrl(value).getName()).join("\n");
+
+        const message = "このLINEトークと集約さんの連携をしましょう！\n↓のように「リンク」と入力した上で参加しているグループの集約さんスプレッドシートのURLを送ってください！解除する場合は「リンク」を「解除」に置き換えてURLを送ってください！\n\n例:\nリンク\nhttps://docs.google.com/spreadsheets/d/********"+`\n\nあなたの連携状況\n${outputText}`;
     postToTalk(replyToken,message);
       }
       if(userMessage.includes("リンク")){
@@ -138,6 +147,35 @@ function doPost(e) {
 
         }catch(ERROR){
           postToTalk(replyToken,"連携に失敗しました\n"+ERROR);
+          return
+        }
+
+      }else if(userMessage.includes("解除")){
+        try{
+          addUserIdToScriptProperty(eventData);
+          // アクセスできるかチェック
+          const userId = eventData.source.userId;
+          const spreadSheetUrl = PropertiesService.getScriptProperties().getProperty(userId);
+          if( SpreadsheetApp.openByUrl(spreadSheetUrl).getSheetByName('集約').getSheetName() == "集約"){
+          }else{
+            throw new Error("URLが正しく読み取れません");
+          }
+
+          deleteSpreadSheetUrlsForUserId(userId,spreadSheetUrl);
+
+          // 名前の確認
+          const spreadSheetName = SpreadsheetApp.openByUrl(spreadSheetUrl).getName();
+          const memberList = getMemberListFromSpreadSheet(spreadSheetUrl);
+          let outputText=[];
+          for(i=0;i<memberList.length;i++){
+            outputText.push(`${memberList[i]} -> ${i+1}`);
+          }
+          outputText = outputText.join("\n");
+          const message = `「${spreadSheetName}」の連携を解除しました。`;
+          postToTalk(replyToken,message);
+
+        }catch(ERROR){
+          postToTalk(replyToken,"解除に失敗しました\n"+ERROR);
           return
         }
 
@@ -286,12 +324,12 @@ function addGroupIdToScriptProperty(eventData){
 }
 
 /**
- * LINEのuserIdと集約さんのURLをスクリプトプロパティに追加する関数
+ * LINEのuserIdと集約さんのURLをスクリプトプロパティに追加して一時保存する関数
  * @param {String} userMessage ユーザーが投稿したメッセージ
  */
 function addUserIdToScriptProperty(eventData){
   const userMessage = eventData.message.text;
-  const spreadSheetUrl = userMessage.replace("@集約さん","").replace("\n","").replace("リンク","");
+  const spreadSheetUrl = userMessage.replace("@集約さん","").replace("\n","").replace("リンク","").replace("解除","");
   // TODO:無駄な文字列が含まれていたときの処理
   const userId = eventData.source.userId;
   PropertiesService.getScriptProperties().setProperty(userId,spreadSheetUrl);
@@ -354,6 +392,27 @@ function getSpreadSheetUrlsByUserId(userId){
   }
 
   return userSpreadSheetUrlList;
+}
+
+/**
+ * userIdに対する特定の集約さんのURLをDBから削除する関数
+ * @param {String} userId
+ * @param {String} spreadSheetUrl
+ */
+function deleteSpreadSheetUrlsForUserId(userId,spreadSheetUrl){
+  const memorySheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("userID-URLs");
+  const urls = getSpreadSheetUrlsByUserId(userId);
+  const urlIndex = urls.indexOf(spreadSheetUrl);
+  const column = urlIndex + 3;
+
+  let userIdList =  memorySheet.getRange(1,1,memorySheet.getLastRow(),1).getValues().flat();
+  let userIdIndex = userIdList.indexOf(userId);
+  const row = userIdIndex + 1;
+
+  const urlAmount = memorySheet.getRange(row,2).getValue();
+
+  memorySheet.getRange(row,column).clearContent();
+  memorySheet.getRange(row,2).setValue(urlAmount -1);
 }
 
 /**

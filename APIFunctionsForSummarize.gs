@@ -155,7 +155,7 @@ function summarizedResultToTextForApi(spreadSheet){
         consecutiveCounter++;
       }else if (value != memberNum && consecutiveCounter>0){
         let cellAmount = consecutiveCounter;
-        let date = Utilities.formatDate(dateHeaderArray[i], 'JST', 'MM/dd');
+        let date = Utilities.formatDate(new Date(dateHeaderArray[i]), 'JST', 'MM/dd');
         let startTime = timeHeaderArray[j-cellAmount];
         let endTime = timeHeaderArray[j-1];
         if(startTime !== endTime){
