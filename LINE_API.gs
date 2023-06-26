@@ -23,14 +23,18 @@ function doPost(e) {
   if(eventType === "follow"){
     const message = "まずはこのLINEトークと集約さんの連携をしましょう！\n↓のように「リンク」と入力した上で参加しているグループの集約さんスプレッドシートのURLを送ってください！\n\n例:\nリンク\nhttps://docs.google.com/spreadsheets/d/********";
     postToTalk(replyToken,message);
-  }if(eventType === "unfollow"){
+  }else if(eventType === "unfollow"){
     const userId = eventData.source.userId;
     PropertiesService.getScriptProperties().deleteProperty(userId);
     deleteUserMode(userId);
+    deleteUserFormDB(userId);
   }
   else if(eventType === "join"){
     const message = "こんにちは、集約さんbotです！日程集約のお手伝いを致します！\nまずはLINEと集約さんの連携をしましょう！\n私をメンションした上で、↓のように集約さんスプレッドシートのURLを送ってください！\n\n例:\n@集約さん\n連携\nhttps://docs.google.com/spreadsheets/d/********";
     postToTalk(replyToken,message);
+  }else if(eventType ==="leave"){
+    const groupId = eventData.source.groupId;
+    PropertiesService.getScriptProperties().deleteProperty(groupId);
   }
   // メッセージイベント
   else if(eventType ==="message"){
@@ -314,13 +318,11 @@ function getMemberListFromSpreadSheet(spreadSheetUrl){
  * @returns {Boolean} bool エラー判定用
  */
 function addGroupIdToScriptProperty(eventData){
-  let bool;
   const userMessage = eventData.message.text;
   const spreadSheetUrl = userMessage.replace("@集約さん","").replace("\n","").replace("連携","");
   // TODO:無駄な文字列が含まれていたときの処理
   const groupId = eventData.source.groupId;
   PropertiesService.getScriptProperties().setProperty(groupId,spreadSheetUrl);
-  
 }
 
 /**
@@ -449,6 +451,30 @@ function memoryUserIdVsName(userId,name){
   memorySheet.getRange(1,2,1,spreadSheetUrlList.length).setValues([spreadSheetUrlList]);
   memorySheet.getRange(2,1,userIdList.length,1).setValues(userIdList)
   memorySheet.getRange(row,column).setValue(name);
+}
+
+/**
+ * userIdのデータをDBから削除する関数
+ * @param {String} userId
+ */
+function deleteUserFormDB(userId){
+  const spreadSheet = SpreadsheetApp.getActiveSpreadsheet();
+  const nameMemorySheet = spreadSheet.getSheetByName("userID-Name");
+  const urlMemorySheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("userID-URLs");
+
+  const nameDbIdList = nameMemorySheet.getRange(3,1,nameMemorySheet.getLastRow(),1).getValues().flat();
+  const nameDbIdIndex = nameDbIdList.indexOf(userId);
+  if(nameDbIdIndex !== -1){
+    nameMemorySheet.deleteRow(nameDbIdIndex+3);
+  }
+  
+  const urlDbIdList = urlMemorySheet.getRange(2,1,urlMemorySheet.getLastRow(),1).getValues().flat();
+  const urlDbIdIndex = urlDbIdList.indexOf(userId);
+  console.log(urlDbIdIndex);
+  if(urlDbIdIndex !== -1){
+    urlMemorySheet.deleteRow(urlDbIdIndex+2);
+  }
+
 }
 
 /**
