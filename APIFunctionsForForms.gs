@@ -34,18 +34,18 @@ function summarizeFormsForApi(spreadSheet){
 
 
 
-  var counter = setSheet.getRange('K12').getValue();
+  let counter = setSheet.getRange('K12').getValue();
 
   for (i=0;i < (answerNum - counter);i++) { //回答件数とカウンタが一致していない場合のみ実行
     //処理
 
     latestForm = formResponses[answerNum- 1 - i];
-    var itemResponses = latestForm.getItemResponses(); //回答がまとまった配列
+    let itemResponses = latestForm.getItemResponses(); //回答がまとまった配列
 
-    var name = itemResponses[0].getResponse();
-    var time = itemResponses[1].getResponse();
+    let name = itemResponses[0].getResponse();
+    let time = itemResponses[1].getResponse();
 
-    var timeArray = time.split('\n');//行ごとに分割
+    let timeArray = time.split('\n');//行ごとに分割
 
 
     //日付,開始時間,終了時間にわける関数
@@ -54,31 +54,31 @@ function summarizeFormsForApi(spreadSheet){
     }
     
     //上記関数で成形した配列にする
-    var splitedTimeArray = timeArray.map(splitFunc); //[****,****,****][日付,開始時刻,終了時刻]
+    let splitedTimeArray = timeArray.map(splitFunc); //[****,****,****][日付,開始時刻,終了時刻]
 
 
 
     //セルの位置を求める関数
     const calcFunc = function(value) {
-      var month = value[0].slice(0,2);
-      var date = value[0].slice(2,5);
-      var startH =value[1].slice(0,2);
-      var startM = value[1].slice(2,5);
-      var endH =value[2].slice(0,2);
-      var endM = value[2].slice(2,5);
-      var startRow = ((startH-7)*2 + (startM/30) +3);
-      var endRow = ((endH-7)*2 + (endM/30) +3);
-      var rowLength = endRow - startRow + 1;
+      let month = cutoffOverMonth(value[0]).slice(0,2);
+      let date =  cutoffOverDate(value[0]).slice(2,5);
+      let startH =cutoffOverHour(value[1]).slice(0,2);
+      let startM = cutoffOverMinute(value[1]).slice(2,5);
+      let endH =cutoffOverHour(value[2]).slice(0,2);
+      let endM = cutoffOverMinute(value[2]).slice(2,5);
+      let startRow = ((startH-7)*2 + (startM/30) +3);
+      let endRow = ((endH-7)*2 + (endM/30) +3);
+      let rowLength = endRow - startRow + 1;
 
       const fd = setSheet.getRange('F7').getValue();
 
-      var firstDay = new Date(fd); //カレンダーの最初の日付
+      let firstDay = new Date(fd); //カレンダーの最初の日付
 
       let setDay = new Date(fd); //指定された日付
           setDay.setMonth(month-1);
           setDay.setDate(date);
 
-      var difDays = (setDay - firstDay)/86400000;
+      let difDays = (setDay - firstDay)/86400000;
 
       if (difDays < 0) { //年をまたぐ入力一年後の日付に
         setDay = setDay.setFullYear(setDay.getFullYear() + 1);
@@ -86,12 +86,12 @@ function summarizeFormsForApi(spreadSheet){
       }
 
 
-      var array = [difDays+2,startRow,rowLength];
+      let array = [difDays+2,startRow,rowLength];
 
       return (array);
     }
 
-      var calculatedTimeArray =splitedTimeArray.map(calcFunc); //[列数,開始行数,開始行から終了行までの行数]
+      let calculatedTimeArray =splitedTimeArray.map(calcFunc); //[列数,開始行数,開始行から終了行までの行数]
 
 
     //配列をもとにスプレッドシートに入力
@@ -110,7 +110,7 @@ function summarizeFormsForApi(spreadSheet){
 
 
   setSheet.getRange('K12').setValue(answerNum);
-  var now = new Date();
+  let now = new Date();
   now = Utilities.formatDate(now, "Asia/Tokyo", "MM/dd HH:mm");
   setSheet.getRange('K13').setValue(now);
 }

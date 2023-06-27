@@ -231,7 +231,8 @@ function doPost(e) {
           return;
         }
         const answer = userMessage;
-        const regex = /^[0-9-]+$/;
+        const regex = /^((0[1-9]|1[0-2])(0[1-9]|[12][0-9]|3[01])-(0[8-9]|1[0-9]|2[0-3])[0-5][0-9]-(0[8-9]|1[0-9]|2[0-3])[0-5][0-9])+$/;
+        // const regex = /^[0-9-]+$/;
         let enterdDateText;
         if (regex.test(answer.replace("\n",""))) {
           for(let i=0;i<spreadSheetUrlList.length;i++){
@@ -247,7 +248,7 @@ function doPost(e) {
             }
           }
         }else{
-          postToTalk(replyToken,"使用できるのは半角数字と-のみです")
+          postToTalk(replyToken,"正しい形式で入力してください。使用できるのは半角数字と-のみです")
         }
           const replyMessage = enterdDateText+"\n\n反映先:\n"+spreadSheetNameList.join("\n");
 
