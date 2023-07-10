@@ -23,7 +23,7 @@ function setSharedResultTextForApi(spreadSheet) {
 
   const resultTextArray = summarizedResultToTextForApi(spreadSheet);
 
-   if(resultTextArray === []){
+   if(resultTextArray.length === 0){
     resultTextArray.push("全員の予定が合う日程がありません");
   }else{
     resultTextArray.unshift("全員の予定が合う日程は以下の通りです");

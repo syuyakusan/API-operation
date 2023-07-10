@@ -60,12 +60,12 @@ function summarizeFormsForApi(spreadSheet){
 
     //セルの位置を求める関数
     const calcFunc = function(value) {
-      let month = cutoffOverMonth(value[0]).slice(0,2);
-      let date =  cutoffOverDate(value[0]).slice(2,5);
-      let startH =cutoffOverHour(value[1]).slice(0,2);
-      let startM = cutoffOverMinute(value[1]).slice(2,5);
-      let endH =cutoffOverHour(value[2]).slice(0,2);
-      let endM = cutoffOverMinute(value[2]).slice(2,5);
+      let month = cutoffOverMonth(value[0].slice(0,2));
+      let date =  cutoffOverDate(value[0].slice(2,5));
+      let startH =cutoffOverHour(value[1].slice(0,2));
+      let startM = cutoffOverMinute(value[1].slice(2,5));
+      let endH =cutoffOverHour(value[2].slice(0,2));
+      let endM = cutoffOverMinute(value[2].slice(2,5));
       let startRow = ((startH-7)*2 + (startM/30) +3);
       let endRow = ((endH-7)*2 + (endM/30) +3);
       let rowLength = endRow - startRow + 1;
