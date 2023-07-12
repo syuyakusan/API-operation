@@ -9,9 +9,16 @@ function getLastColumnInRange(range){
   const rangeHeight = range.getLastRow() - range.getRow() + 1;
   let maxRowLength = 0;
   for(i=0;i<rangeHeight;i++){
-    let length = matrix[i].filter(value => value).length;
+    let length = 0;
+
+    for(j=0;j<matrix[i].length;j++){
+    const index = matrix[i].length -1 -j;
+    if(matrix[i][index] != ""){
+      length = index+1;
+      break;
+    }}
     if(length > maxRowLength){
-      maxRowLength = length;
+      maxRowLength = length; 
     }
   }
   const lastColumn = firstColumn + maxRowLength - 1;
