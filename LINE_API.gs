@@ -73,7 +73,7 @@ function doPost(e) {
 
           const setSheet = spreadSheet.getSheetByName("ホーム");
           const result = setSheet.getRange("F18").getValue();
-          const replyMessage = "集約が完了しました！\n"+result;
+          const replyMessage = "集約が完了しました！\n"+result+"\n詳細はスプレッドシートをご覧ください";
 
           postToTalk(replyToken,replyMessage);
       }else if(userMessage.includes("回答状況")){
