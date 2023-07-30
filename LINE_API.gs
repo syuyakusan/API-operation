@@ -387,7 +387,7 @@ function getSpreadSheetUrlsByUserId(userId){
   let userIdList =  memorySheet.getRange(1,1,memorySheet.getLastRow(),1).getValues().flat();
   let userIdIndex = userIdList.indexOf(userId);
   const row = userIdIndex + 1;
-  const userArray = memorySheet.getRange(row,2,1,memorySheet.getLastColumn()).getValues().flat();
+  const userArray = memorySheet.getRange(row,2,1,memorySheet.getLastColumn()-1).getValues().flat();
   const urlAmount = userArray[0];
   let userSpreadSheetUrlList = [];
   for(i=0;i<urlAmount;i++){
@@ -406,16 +406,27 @@ function deleteSpreadSheetUrlsForUserId(userId,spreadSheetUrl){
   const memorySheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("userID-URLs");
   const urls = getSpreadSheetUrlsByUserId(userId);
   const urlIndex = urls.indexOf(spreadSheetUrl);
+  if(urlIndex === -1){
+    console.log('that url not found')
+    return;
+    }
   const column = urlIndex + 3;
-
+  console.log("urls:"+urls);
+  console.log("column:"+column);
   let userIdList =  memorySheet.getRange(1,1,memorySheet.getLastRow(),1).getValues().flat();
   let userIdIndex = userIdList.indexOf(userId);
   const row = userIdIndex + 1;
 
-  const urlAmount = memorySheet.getRange(row,2).getValue();
-
   memorySheet.getRange(row,column).clearContent();
-  memorySheet.getRange(row,2).setValue(urlAmount -1);
+  let userRowData = memorySheet.getRange(row,1,1,memorySheet.getLastColumn()).getValues().flat();
+  console.log(userRowData);
+  userRowData.splice(userRowData.indexOf(''),1);
+  // URLの数
+  console.log(userRowData);
+  userRowData.push('');
+  userRowData[1] = userRowData[1] - 1;
+  console.log(userRowData);
+  memorySheet.getRange(row,1,1,memorySheet.getLastColumn()).setValues([userRowData]);
 }
 
 /**
