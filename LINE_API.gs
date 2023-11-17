@@ -151,6 +151,8 @@ function doPost(e) {
 
         }catch(ERROR){
           postToTalk(replyToken,"連携に失敗しました\n"+ERROR);
+          const userId = eventData.source.userId;
+          deleteUserMode(userId);
           return
         }
 
@@ -238,10 +240,12 @@ function doPost(e) {
           for(let i=0;i<spreadSheetUrlList.length;i++){
             try{
                 const spreadSheetUrl = spreadSheetUrlList[i];
-                const spreadSheet = SpreadsheetApp.openByUrl(spreadSheetUrl);
-                spreadSheetNameList.push(spreadSheet.getName());
-                name = getNameFormUrl(userId,spreadSheetUrl);
-                enterdDateText = summarizeLineDateAnswerToSpreadSheetForApi(spreadSheet,name,answer);
+                if(spreadSheetUrl !== ""){
+                  const spreadSheet = SpreadsheetApp.openByUrl(spreadSheetUrl);
+                  spreadSheetNameList.push(spreadSheet.getName());
+                  name = getNameFormUrl(userId,spreadSheetUrl);
+                  enterdDateText = summarizeLineDateAnswerToSpreadSheetForApi(spreadSheet,name,answer);
+                }
             }catch(ERROR){
               postToTalk(replyToken,"反映に失敗しました\n"+ERROR);
               return;
@@ -534,5 +538,8 @@ function checkUserMode(userId,mode){
  */
 function deleteUserMode(userId){
   const key = `ST_${userId}`;
-  PropertiesService.getScriptProperties().deleteProperty(key);
+  // スクリプトプロパティが存在しない可能性がある
+  try{
+    PropertiesService.getScriptProperties().deleteProperty(key);
+  }catch(e){}
 }

@@ -36,7 +36,7 @@ function summarizeFormsForApi(spreadSheet){
 
   let counter = setSheet.getRange('K12').getValue();
 
-  for (i=0;i < (answerNum - counter);i++) { //回答件数とカウンタが一致していない場合のみ実行
+  for (let i=0;i < (answerNum - counter);i++) { //回答件数とカウンタが一致していない場合のみ実行
     //処理
 
     latestForm = formResponses[answerNum- 1 - i];
@@ -97,8 +97,8 @@ function summarizeFormsForApi(spreadSheet){
     //配列をもとにスプレッドシートに入力
     const sheet = spreadSheet.getSheetByName(name);
     
-    for (i=0;i<calculatedTimeArray.length;i++) {
-      let array = calculatedTimeArray[i];
+    for (let j=0;j<calculatedTimeArray.length;j++) {
+      let array = calculatedTimeArray[j];
       let column = array[0];
       let row = array[1];
       let length = array[2];
